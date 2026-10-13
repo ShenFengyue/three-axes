@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f4ef">
+  <title>关系坐标 · 约会现场笔记</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f2eee5; --ink: #282721; --muted: #77756c; --line: #d5d0c5;
+      --card: #f8f6f0; --olive: #788365; --olive-soft: #e7e8dc; --coral: #b85f43;
+      --text-soft: #5e5c54; --panel-text: #37362f; --warn: #9a503a;
+      --serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
+      --sans: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --paper: #191a17; --ink: #eee9dd; --muted: #aaa69b; --line: #45443d;
+      --card: #20211d; --olive: #b4bd9c; --olive-soft: #30352c; --coral: #e09879;
+      --text-soft: #c2bdb2; --panel-text: #e2ddd2; --warn: #e3a28c;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--paper); }
+    body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(--sans); line-height: 1.65; }
+    button { color: inherit; font: inherit; }
+    .shell { width: min(1360px, 100%); margin: 0 auto; padding: 30px 52px 52px; }
+    header { display: flex; align-items: center; gap: 20px; border-bottom: 1px solid var(--line); padding-bottom: 17px; }
+    .brand { display: flex; align-items: center; gap: 12px; margin-right: auto; }
+    .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--olive); color: var(--olive); font-family: var(--serif); font-size: 15px; }
+    .brand-copy strong, .brand-copy small { display: block; }
+    .brand-copy strong { font-family: var(--serif); font-size: 15px; font-weight: 600; letter-spacing: .04em; }
+    .brand-copy small { color: var(--muted); font-size: 10px; letter-spacing: .08em; }
+    .top-note { color: var(--muted); font-family: var(--serif); font-size: 12px; }
+    .theme-toggle { border: 0; border-bottom: 1px solid var(--line); padding: 5px 1px; background: transparent; color: var(--text-soft); font-size: 11px; cursor: pointer; }
+    .theme-toggle:hover { border-color: var(--coral); color: var(--coral); }
+    main { padding-top: 46px; }
+    .eyebrow { color: var(--coral); font-size: 11px; letter-spacing: .14em; }
+    h1 { max-width: 850px; margin: 13px 0 14px; font-family: var(--serif); font-size: clamp(38px, 5.2vw, 68px); font-weight: 500; letter-spacing: -.055em; line-height: 1.2; }
+    .intro { max-width: 650px; margin: 0; color: var(--text-soft); font-size: 14px; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(360px, .88fr); margin-top: 34px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .visual { display: flex; min-width: 0; flex-direction: column; padding: 20px 26px 18px 0; }
+    .detail { display: flex; min-width: 0; flex-direction: column; padding: 27px 0 24px 32px; border-left: 1px solid var(--line); }
+    .visual-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 3px; }
+    .visual-title { font-family: var(--serif); font-size: 16px; }
+    .visual-tools { display: flex; align-items: center; gap: 14px; }
+    .drag-hint { color: var(--muted); font-size: 11px; }
+    .reset-view { border: 0; border-bottom: 1px solid var(--line); padding: 2px 0; background: transparent; color: var(--olive); font-size: 11px; cursor: pointer; }
+    .reset-view:hover { border-color: var(--coral); color: var(--coral); }
+    .theme-toggle:focus-visible, .reset-view:focus-visible, .region-btn:focus-visible { outline: 2px solid var(--coral); outline-offset: 3px; }
+    canvas { display: block; width: 100%; height: 390px; cursor: grab; touch-action: none; }
+    canvas:active { cursor: grabbing; }
+    .axis-key { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 15px 0 17px; border-top: 1px solid var(--line); }
+    .axis { color: var(--muted); font-size: 11px; }
+    .axis strong { display: block; margin-bottom: 1px; color: var(--ink); font-size: 12px; font-weight: 600; }
+    .axis i { color: var(--muted); font-style: normal; }
+    .region-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 17px; }
+    .region-btn { display: flex; align-items: center; min-height: 38px; border: 0; border-top: 1px solid var(--line); padding: 6px 3px; background: transparent; text-align: left; font-size: 11px; cursor: pointer; transition: color .16s ease, padding .16s ease; }
+    .region-btn:hover, .region-btn[aria-pressed="true"] { padding-left: 8px; color: var(--coral); }
+    .region-btn span { margin-right: 9px; color: var(--muted); font-family: var(--serif); font-size: 12px; }
+    .region-btn[aria-pressed="true"] span { color: var(--coral); }
+    .detail-kicker { color: var(--coral); font-size: 11px; letter-spacing: .08em; }
+    .detail h2 { margin: 9px 0 12px; font-family: var(--serif); font-size: clamp(25px, 2.7vw, 34px); font-weight: 500; letter-spacing: -.035em; line-height: 1.35; }
+    .summary { margin: 0 0 16px; color: var(--text-soft); font-size: 13px; }
+    .badge { width: max-content; margin-bottom: 11px; border-left: 2px solid var(--olive); padding: 2px 0 2px 9px; color: var(--olive); font-size: 11px; }
+    .section { padding: 13px 0; border-top: 1px solid var(--line); }
+    .section h3 { margin: 0 0 6px; color: var(--olive); font-family: var(--serif); font-size: 13px; font-weight: 600; }
+    .section p, .section ul { margin: 0; color: var(--panel-text); font-size: 12px; }
+    .section ul { padding-left: 17px; }
+    .section li + li { margin-top: 5px; }
+    .section.warn p { color: var(--warn); }
+    .readings { margin-top: auto; padding-top: 13px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+    .readings summary { color: var(--ink); font-family: var(--serif); font-size: 12px; cursor: pointer; }
+    .readings ol { padding-left: 18px; }
+    .readings li { margin: 7px 0; }
+    .readings a { color: var(--olive); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+    .bottom-note { margin: 19px 0 0; color: var(--muted); font-size: 11px; }
+    .bottom-note strong { color: var(--ink); font-weight: 600; }
+    @media (max-width: 900px) {
+      .shell { padding-right: 30px; padding-left: 30px; }
+      .workspace { grid-template-columns: minmax(0, 1fr) minmax(300px, .9fr); }
+      .visual { padding-right: 19px; }
+      .detail { padding-left: 22px; }
+    }
+    @media (max-width: 760px) {
+      .shell { padding: 22px 22px 36px; }
+      main { padding-top: 35px; }
+      .workspace { grid-template-columns: 1fr; }
+      .visual { padding: 17px 0 19px; }
+      .detail { border-top: 1px solid var(--line); border-left: 0; padding: 23px 0; }
+      .detail h2 { font-size: 29px; }
+    }
+    @media (max-width: 520px) {
+      .shell { padding: 18px 16px 30px; }
+      header { gap: 13px; }
+      .top-note { display: none; }
+      main { padding-top: 29px; }
+      h1 { font-size: 40px; }
+      .intro { font-size: 13px; }
+      .workspace { margin-top: 25px; }
+      .visual-head { align-items: flex-start; }
+      .visual-tools { flex-direction: column; align-items: flex-end; gap: 4px; }
+      .drag-hint { max-width: 150px; text-align: right; }
+      canvas { height: 330px; }
+      .axis-key { gap: 6px; }
+      .axis, .axis strong { font-size: 10px; }
+      .region-grid { gap: 0 10px; }
+      .region-btn { font-size: 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header><div class="brand"><span class="brand-mark" aria-hidden="true">间</span><span class="brand-copy"><strong>关系坐标</strong><small>几条关于相处的现场笔记</small></span></div><button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">切换深色</button><div class="top-note">先看见彼此，再谈合不合适。</div></header>
+    <main>
+      <div class="eyebrow">一张关于相处的观察地图</div>
+      <h1>关系没有公式，<br>但相处总有线索。</h1>
+      <p class="intro">转一转坐标，挑一个接近的情境。这里给的是观察角度，不是给谁定性；真正重要的，还是你们之间发生了什么。</p>
+      <div class="workspace">
+        <section class="visual" aria-label="可交互的三维关系坐标">
+          <div class="visual-head"><span class="visual-title">三条轴，八种相遇位置</span><div class="visual-tools"><span class="drag-hint">按住拖动，找一个接近的位置</span><button class="reset-view" id="resetView" type="button">还原视角</button></div></div>
+          <canvas id="space" aria-label="三维坐标图；可拖动旋转，点击八个色点选择区块"></canvas>
+          <div class="axis-key">
+            <div class="axis"><strong>成长资源</strong><i>匮乏 ↔ 充足</i></div>
+            <div class="axis"><strong>主观吸引力</strong><i>偏低 ↔ 偏高</i></div>
+            <div class="axis"><strong>亲密节奏</strong><i>慢热 ↔ 更开放</i></div>
+          </div>
+          <div class="region-grid" id="regionGrid" aria-label="八个区块"></div>
+        </section>
+        <article class="detail" id="detail" aria-live="polite"></article>
+      </div>
+      <p class="bottom-note"><strong>记住：</strong>坐标只能帮你整理观察，不能替对方回答。亲密节奏要靠本人表达和双方沟通来了解；每一步都需要当下、明确、可以改变的同意。</p>
+    </main>
+  </div>
+<script>
+(() => {
+  const sources = [
+    ['Luo & Zhang (2009), speed-dating 中初始吸引的多层因素', 'https://pubmed.ncbi.nlm.nih.gov/19558447/'],
+    ['Fernández del Río 等 (2019), sociosexuality 的行为、态度与欲望维度', 'https://pmc.ncbi.nlm.nih.gov/articles/PMC6695927/'],
+    ['Thomas 等 (2023), 初次印象、匹配感与后续约会结果', 'https://pmc.ncbi.nlm.nih.gov/articles/PMC9659375/'],
+    ['Berrios 等 (2015), 约会互动中的积极情绪体验与再次见面意愿', 'https://pmc.ncbi.nlm.nih.gov/articles/PMC4342761/'],
+    ['Qian 等 (2026), 资源偏好会随个人收入与经济环境变化', 'https://pmc.ncbi.nlm.nih.gov/articles/PMC13012117/']
+  ];
+  const content = [
+    {title:'资源少 · 吸引力偏低 · 慢热',summary:'如果双方都面临资源压力、彼此吸引尚未明确，且对方表达慢热，互动往往需要更多安全感与时间。三条信息本身并不能预测她的择偶标准。',hyp:'“经济压力会让某些人更重视稳定”是情境假设，不可套到个人身上；偏低的主观吸引力也不代表没有化学反应。',signals:['她是否主动延续话题、提出问题或接受具体邀约？','交流节奏是否逐渐放松，而非只由你单方面维持？'],advice:['选择低成本、轻松且容易结束的初次见面，例如咖啡或散步。','用真实的共同兴趣开启对话，具体表达欣赏；邀约后留出空间，不反复催促。'],avoid:'别用“她条件一般所以更容易追”这样的推断；也别把经济困难误读成需要你来拯救。'},
+    {title:'资源少 · 吸引力偏低 · 更开放',summary:'“更开放”只表示她已表达较开放的亲密节奏；它不等于对你有兴趣，也不等于同意某个具体行为。',hyp:'成长资源与当下关系目标可能有关，但本工具没有能支持这个组合预测个人意愿的数据。开放程度也包含态度、欲望和实际行为等不同面向。',signals:['她是否明确表达与你相同的关系期待？','她对当前具体互动的回应是否积极、主动且持续？'],advice:['先确认双方对关系和亲密节奏的期待，再提出不带压力的下一步。','每个新的亲密步骤都要看当下的明确意愿；犹豫时停下来问，而不是把沉默当同意。'],avoid:'不要把开放态度当作默认许可，不以礼物、花钱或付出换取亲密。'},
+    {title:'资源少 · 吸引力偏高 · 慢热',summary:'你觉得她有吸引力，不代表她对你有同样感受。若对方慢热，清晰、稳定、不过度推进的互动更容易让彼此看清是否合拍。',hyp:'资源背景不是人格或关系标准的替代指标。外貌带来的第一印象可能影响初始吸引，但互动中的匹配感和双方各自的感受也很重要。',signals:['她是否在后续互动中投入时间、主动联系或提出替代安排？','当你放慢节奏时，她是否更愿意表达真实想法？'],advice:['保持自己的生活重心和社交节奏，不把一次拒绝解释成“考验”。','用直接但轻松的方式表达好感，例如：“我和你聊天挺开心，想约你周末喝杯咖啡。”'],avoid:'不要故意忽冷忽热、贬低自己或夸大条件来制造不安全感。'},
+    {title:'资源少 · 吸引力偏高 · 更开放',summary:'初始吸引和开放表达都不能替代互相了解。清楚说明自己的意图，能减少双方对关系性质的误会。',hyp:'速度约会研究发现外貌吸引与初始兴趣有关，但兴趣也有个人、对象和独特互动等来源；不能由此推出这个组合的成功概率。',signals:['她是否明确表达兴趣，并愿意共同商量见面方式？','你们能否自在地谈边界、避孕与健康，而没有人被催促？'],advice:['诚实说清你是想约会、想进一步认识，还是暂时只想轻松相处。','把边界沟通当作互相照顾；对方改变主意时及时停下，也可以表达你自己的边界。'],avoid:'别用“她比较开放”当作推进更快的理由；亲密行为需要逐步、当下、双方明确同意。'},
+    {title:'资源足 · 吸引力偏低 · 慢热',summary:'物质条件不会自动转化为吸引力。比起展示资源，关注交谈是否平等、轻松，和对方是否愿意继续了解更有信息量。',hyp:'研究表明资源偏好会受个人收入及周围经济环境影响；这并不说明某个女性会因为你的资源而喜欢你，更不说明成长资源决定价值观。',signals:['她是否因为对话本身而投入，而不仅是接受你提供的便利？','是否能坦然讨论各自的生活安排和消费习惯？'],advice:['选择双方都舒服的活动，不把昂贵消费变成邀约门槛或人情债。','展示你如何生活、如何对人，而不是只展示能提供什么。'],avoid:'不要用消费测试对方，也不要把她接受一次礼貌邀约解释为情感或身体上的承诺。'},
+    {title:'资源足 · 吸引力偏低 · 更开放',summary:'资源、外貌和亲密开放都只是很小一部分背景。是否彼此喜欢，需要在具体互动中确认。',hyp:'没有可靠证据能用这三个维度组合推断对方“看重钱”或愿意发生亲密关系。将标签转成开放问题，比套用策略更有用。',signals:['她对你本人表现出哪些具体好奇？','双方是否能清楚表达想要与不想要的事？'],advice:['问问她喜欢怎样安排约会、目前想认识什么样的人；认真听答案。','让邀约具体、轻松、可拒绝；若她拒绝，就友好接受并把注意力放回双方真实的匹配上。'],avoid:'不要根据外貌或生活方式推测性经历，也不要以资源优势换取关注。'},
+    {title:'资源足 · 吸引力偏高 · 慢热',summary:'“条件看起来不错”并不能免除建立信任的过程。对慢热的人，耐心不是策略，而是允许对方按自己的节奏作选择。',hyp:'初始外貌吸引可以影响第一印象，但约会研究也发现独特的两人匹配感与后续兴趣有关。这个框架没有依据给该类型分配数字概率。',signals:['对方是否自愿扩大交流、主动安排下一次见面？','你的投入是否得到相近程度的回应？'],advice:['明确表达兴趣，同时给对方完整的选择空间。','表现稳定和好奇心：围绕她真实分享的内容追问，而不是用套路制造“稀缺感”。'],avoid:'别认为高吸引力或资源让你可以跳过尊重、信任和沟通。'},
+    {title:'资源足 · 吸引力偏高 · 更开放',summary:'这是最容易让人过度自信的一格：表面条件与开放表达依然不能预测两人是否合适，更不能替代明确同意。',hyp:'有研究支持外貌与部分初始约会兴趣相关，也有研究显示资源偏好会随环境而变；没有证据证明三者相加就形成高胜率画像。',signals:['她的兴趣是否明确且持续，而非只在某一次场合表现热情？','你们是否对关系期待、边界和安全措施有共同理解？'],advice:['以平等、具体、诚实的方式邀约，不承诺你不打算兑现的关系。','在亲密互动前核对双方意愿与边界；任何一方都可以随时停下。'],avoid:'不要把外貌、财富或开放表达当成“胜券在握”；不要把拒绝当成谈判起点。'}
+  ];
+  const bits = n => ({r:n&1,a:(n>>1)&1,p:(n>>2)&1});
+  const label = n => {const b=bits(n);return `${b.r?'资源足':'资源少'} · ${b.a?'吸引力偏高':'吸引力偏低'} · ${b.p?'更开放':'慢热'}`};
+  const grid=document.getElementById('regionGrid'), detail=document.getElementById('detail');let selected=0;
+  content.forEach((_,i)=>{const b=document.createElement('button');b.className='region-btn';b.type='button';b.dataset.index=i;b.setAttribute('aria-pressed','false');b.innerHTML=`<span>${String(i+1).padStart(2,'0')}</span>${label(i)}`;b.addEventListener('click',()=>select(i));grid.appendChild(b)});
+  function select(i){selected=(i+8)%8;document.querySelectorAll('.region-btn').forEach((b,j)=>{b.setAttribute('aria-pressed',String(j===selected))});renderDetail();draw()}
+  function renderDetail(){const d=content[selected];detail.innerHTML=`<div class="detail-kicker">观察笔记 · ${String(selected+1).padStart(2,'0')} / 08</div><h2>${d.title}</h2><p class="summary">${d.summary}</p><div class="badge">先当作一种可能，别急着给人贴标签</div><div class="section"><h3>先别急着下结论</h3><p>${d.hyp}</p></div><div class="section"><h3>留意相处里的信号</h3><ul>${d.signals.map(x=>`<li>${x}</li>`).join('')}</ul></div><div class="section"><h3>你可以试试</h3><ul>${d.advice.map(x=>`<li>${x}</li>`).join('')}</ul></div><div class="section warn"><h3>别替她做决定</h3><p>${d.avoid}</p></div><details class="readings"><summary>这些想法参考了什么</summary><ol>${sources.map(s=>`<li><a href="${s[1]}" target="_blank" rel="noopener noreferrer">${s[0]}</a></li>`).join('')}</ol><p>这些研究讨论初次吸引、互动或资源偏好，并没有验证这里的八种组合，也不能替具体的人预测结果。它们只是背景线索，不是给个人算概率的公式。</p></details>`}
+  // Canvas 2D perspective projection: eight octant markers are selectable points.
+  const canvas=document.getElementById('space'),ctx=canvas.getContext('2d');let yaw=-.62,pitch=.48,drag=null,points=[];
+  document.getElementById('resetView').addEventListener('click',()=>{yaw=-.62;pitch=.48;draw()});
+  const themeButton=document.getElementById('themeToggle'),themeMeta=document.querySelector('meta[name="theme-color"]');
+  function setTheme(theme,persist=true){document.documentElement.dataset.theme=theme;const dark=theme==='dark';themeButton.textContent=dark?'切换浅色':'切换深色';themeButton.setAttribute('aria-pressed',String(dark));themeButton.setAttribute('aria-label',dark?'切换到浅色模式':'切换到深色模式');themeMeta.content=dark?'#141814':'#f5f4ef';if(persist){try{localStorage.setItem('relationship-coordinate-theme',theme)}catch(_){}}draw()}
+  let initialTheme='light';try{initialTheme=localStorage.getItem('relationship-coordinate-theme')||((matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light')}catch(_){}setTheme(initialTheme,false);themeButton.addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
+  function resize(){const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);draw()}
+  function project(x,y,z,cx,cy,s){const cyaw=Math.cos(yaw),syaw=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);const X=x*cyaw-z*syaw,Z=x*syaw+z*cyaw,Y=y*cp-Z*sp,D=y*sp+Z*cp;const f=4.6/(4.6-D);return {x:cx+X*s*f,y:cy-Y*s*f,d:D}}
+  function draw(){if(!ctx)return;const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;ctx.clearRect(0,0,w,h);const cx=w/2,cy=h/2-2,s=Math.min(w*.31,h*.36);const P=(x,y,z)=>project(x,y,z,cx,cy,s);
+    const dark=document.documentElement.dataset.theme==='dark';
+    // Subtle ground plane and center guides.
+    ctx.save();ctx.strokeStyle=dark?'#303a31':'#e8e9e1';ctx.lineWidth=1;ctx.setLineDash([3,5]);for(const y of [-1,1]){const a=P(-1,y,-1),b=P(1,y,-1),c=P(1,y,1),d=P(-1,y,1);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.lineTo(c.x,c.y);ctx.lineTo(d.x,d.y);ctx.closePath();ctx.stroke()}ctx.restore();
+    // Tint the eight actual octants, then draw the shared cube frame over them.
+    const palette=['#a3bd6b','#e6a186','#92aac5','#c7a976','#8cab74','#d7a879','#88a9a0','#c78b79'];
+    const faces=[];
+    for(let i=0;i<8;i++){
+      const b=bits(i),x0=b.r?0:-1,x1=b.r?1:0,y0=b.a?0:-1,y1=b.a?1:0,z0=b.p?0:-1,z1=b.p?1:0;
+      const corners=[[x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]];
+      for(const f of [[0,1,2,3],[4,7,6,5],[0,4,5,1],[3,2,6,7],[0,3,7,4],[1,5,6,2]]){
+        const q=f.map(k=>P(...corners[k]));faces.push({q,depth:q.reduce((sum,p)=>sum+p.d,0)/4,i});
+      }
+    }
+    faces.sort((a,b)=>a.depth-b.depth).forEach(face=>{ctx.beginPath();ctx.moveTo(face.q[0].x,face.q[0].y);face.q.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));ctx.closePath();ctx.fillStyle=palette[face.i];ctx.globalAlpha=face.i===selected?.26:(dark?.16:.105);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=dark?'#465147':'#d9ddd2';ctx.lineWidth=.65;ctx.stroke()});
+    const verts=[];for(let x of [-1,1])for(let y of [-1,1])for(let z of [-1,1])verts.push({x,y,z,p:P(x,y,z)});
+    ctx.strokeStyle=dark?'#a8b59e':'#606b5c';ctx.lineWidth=1.4;for(let i=0;i<verts.length;i++)for(let j=i+1;j<verts.length;j++){const a=verts[i],b=verts[j];if((a.x!==b.x)+(a.y!==b.y)+(a.z!==b.z)===1){ctx.beginPath();ctx.moveTo(a.p.x,a.p.y);ctx.lineTo(b.p.x,b.p.y);ctx.stroke()}}
+    // Axis arrows extend slightly beyond the cube.
+    const axes3=[{to:[1.25,0,0],name:'资源',low:'少',high:'足',color:'#7e9a38'},{to:[0,1.25,0],name:'吸引力',low:'偏低',high:'偏高',color:'#e17854'},{to:[0,0,1.25],name:'亲密节奏',low:'慢热',high:'开放',color:'#5b7da4'}];
+    axes3.forEach(ax=>{const a=P(0,0,0),b=P(...ax.to),lo=P(-ax.to[0],-ax.to[1],-ax.to[2]);ctx.strokeStyle=ax.color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(lo.x,lo.y);ctx.lineTo(b.x,b.y);ctx.stroke();const ang=Math.atan2(b.y-a.y,b.x-a.x);ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-8*Math.cos(ang-.42),b.y-8*Math.sin(ang-.42));ctx.lineTo(b.x-8*Math.cos(ang+.42),b.y-8*Math.sin(ang+.42));ctx.closePath();ctx.fillStyle=ax.color;ctx.fill();ctx.font='600 11px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif';ctx.fillStyle=dark?'#edf1e8':'#30392e';ctx.fillText(ax.name,b.x+7,b.y-6);ctx.font='10px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif';ctx.fillStyle=dark?'#b8c2b5':'#788073';ctx.fillText(ax.high,b.x+7,b.y+8);ctx.fillText(ax.low,lo.x-23,lo.y+14)});
+    points=[];for(let i=0;i<8;i++){const b=bits(i),x=b.r?.56:-.56,y=b.a?.56:-.56,z=b.p?.56:-.56,p=P(x,y,z);points.push({...p,i});}
+    points.sort((a,b)=>a.d-b.d).forEach(pt=>{const active=pt.i===selected,r=active?11:8;ctx.beginPath();ctx.arc(pt.x,pt.y,r+4,0,Math.PI*2);ctx.fillStyle=active?'rgba(196,237,82,.28)':(dark?'rgba(31,38,32,.96)':'rgba(255,255,250,.9)');ctx.fill();ctx.beginPath();ctx.arc(pt.x,pt.y,r,0,Math.PI*2);ctx.fillStyle=active?'#c4ed52':['#91a755','#f18a66','#7191b4','#c0a06c'][pt.i%4];ctx.fill();ctx.strokeStyle=active?'#52623a':(dark?'#263027':'#fffefa');ctx.lineWidth=2;ctx.stroke();ctx.fillStyle=active?'#30392e':(dark?'#f1f4ed':'#30392e');ctx.font='700 9px Segoe UI, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(pt.i+1),pt.x,pt.y+.4)});ctx.textAlign='start';ctx.textBaseline='alphabetic';}
+  canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY,yaw,pitch,moved:false}});
+  canvas.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>3)drag.moved=true;yaw=drag.yaw+dx*.008;pitch=Math.max(-1.15,Math.min(1.15,drag.pitch+dy*.008));draw()});
+  canvas.addEventListener('pointerup',e=>{if(!drag)return;const moved=drag.moved;drag=null;if(!moved){const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let best=null,dist=24;for(const p of points){const d=Math.hypot(x-p.x,y-p.y);if(d<dist){best=p;dist=d}}if(best)select(best.i)}});
+  canvas.addEventListener('pointercancel',()=>drag=null);window.addEventListener('resize',resize);document.addEventListener('keydown',e=>{if(e.target.closest('button')){if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();select(selected+1);document.querySelector(`[data-index="${selected}"]`).focus()}if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();select(selected-1);document.querySelector(`[data-index="${selected}"]`).focus()}}});
+  renderDetail();select(0);resize();
+})();
+</script>
+</body>
+</html>
